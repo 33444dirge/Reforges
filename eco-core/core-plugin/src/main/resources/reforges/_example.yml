@@ -36,11 +36,11 @@ stone:
 
   price: # (Optional) The price required to apply this reforge, overrides the default reforge price
     value: 100000
-    type: coins # See here: https://plugins.auxilor.io/all-plugins/prices
+    type: coins # See here: https://hub.auxilor.io/wiki/eco/the-price-lookup-system
     display: "&6$%value%"
 
 # The effects of the reforge (i.e. the functionality)
-# See here: https://plugins.auxilor.io/effects/configuring-an-effect
+# See here: https://hub.auxilor.io/wiki/libreforge/configuring-an-effect
 effects:
   - id: damage_multiplier
     args:

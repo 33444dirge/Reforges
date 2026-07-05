@@ -145,7 +145,7 @@ gui:
     category: PLAYERS
 
 reforge:
-  price: # Default cost to reforge, unless a reforge sets its own; see https://plugins.auxilor.io/all-plugins/prices
+  price: # Default cost to reforge, unless a reforge sets its own; see https://hub.auxilor.io/wiki/eco/the-price-lookup-system
     value: 7500
     type: coins
     display: "&6$%value%"
@@ -170,5 +170,5 @@ reforge:
 ## Where to go next
 
 - **Make a reforge:** turn this menu into something to apply in [How to Make a Reforge](how-to-make-a-custom-reforge).
-- **Prices:** see the price formats in the [eco prices docs](https://plugins.auxilor.io/all-plugins/prices).
+- **Prices:** see the price formats in the [eco prices docs](https://hub.auxilor.io/wiki/eco/the-price-lookup-system).
 - **Commands:** manage the plugin from [Commands and Permissions](commands-and-permissions).

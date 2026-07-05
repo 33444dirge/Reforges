@@ -19,7 +19,7 @@ A **reforge** is a modifier players apply to an item from the reforge menu to bo
 
 ## Naming and IDs
 
-The file name without `.yml` is the reforge ID. That ID is what you pass to commands and to the [Item Lookup System](https://plugins.auxilor.io/the-item-lookup-system).
+The file name without `.yml` is the reforge ID. That ID is what you pass to commands and to the [Item Lookup System](https://hub.auxilor.io/wiki/eco/the-item-lookup-system-the-item-lookup-system).
 
 :::warning ID rules
 IDs may only contain lowercase letters, numbers, and underscores (a-z, 0-9, _). No spaces, capitals, or hyphens, or the reforge will not load.
@@ -73,7 +73,7 @@ stone:
     - air
   price: # Optional; overrides the default reforge price from config.yml
     value: 100000
-    type: coins # See https://plugins.auxilor.io/all-plugins/prices
+    type: coins # See https://hub.auxilor.io/wiki/eco/the-price-lookup-system
     display: "&6$%value%"
 
 # === Effects: what the reforge actually does ===
@@ -133,12 +133,12 @@ stone:
     - air
   price: # Optional; overrides the default reforge price from config.yml
     value: 100000
-    type: coins # See https://plugins.auxilor.io/all-plugins/prices
+    type: coins # See https://hub.auxilor.io/wiki/eco/the-price-lookup-system
     display: "&6$%value%"
 ```
 
 :::tip
-We support both shaped and shapeless recipes. See [Recipes](https://plugins.auxilor.io/the-item-lookup-system/recipes) for how to configure them.
+We support both shaped and shapeless recipes. See [Recipes](https://hub.auxilor.io/wiki/eco/the-item-lookup-system-the-item-lookup-system/recipes) for how to configure them.
 :::
 
 ### Effects
@@ -159,8 +159,8 @@ on-reforge-effects: [] # Effects run once, when the reforge is applied
 :::danger Effects are their own system
 Effects, conditions, and triggers are a shared system documented separately, not unique to Reforges.
 
-- To configure a single effect, see [Configuring an Effect](https://plugins.auxilor.io/effects/configuring-an-effect).
-- To string effects under one trigger, see [Configuring an Effect Chain](https://plugins.auxilor.io/effects/configuring-a-chain).
+- To configure a single effect, see [Configuring an Effect](https://hub.auxilor.io/wiki/libreforge/configuring-an-effect).
+- To string effects under one trigger, see [Configuring an Effect Chain](https://hub.auxilor.io/wiki/libreforge/configuring-a-chain).
 :::
 
 :::tip Troubleshooting
@@ -175,4 +175,4 @@ Effects, conditions, and triggers are a shared system documented separately, not
 
 - **Default reforges:** browse the [shipped configs](https://github.com/Auxilor/Reforges/tree/master/eco-core/core-plugin/src/main/resources/reforges) for working examples.
 - **Community configs:** find and share more on [lrcdb](https://lrcdb.auxilor.io/).
-- **Effects reference:** learn the effect system in [Configuring an Effect](https://plugins.auxilor.io/effects/configuring-an-effect).
+- **Effects reference:** learn the effect system in [Configuring an Effect](https://hub.auxilor.io/wiki/libreforge/configuring-an-effect).
