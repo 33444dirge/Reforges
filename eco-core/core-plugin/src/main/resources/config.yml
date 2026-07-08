@@ -164,7 +164,7 @@ reforge:
   # true:  玩家必须在右侧放入对应的重铸石才能重铸
   # false: 玩家可以不使用重铸石，随机获得一个重铸效果
   require-stone: false
-  # See here: https://plugins.auxilor.io/all-plugins/prices
+  # See here: https://hub.auxilor.io/wiki/eco/the-price-lookup-system
   price:
     value: 7500
     type: coins
