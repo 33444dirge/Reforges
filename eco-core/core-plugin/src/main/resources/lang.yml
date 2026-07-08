@@ -6,6 +6,11 @@ messages:
   reloaded: "Reloaded in %time%ms! Loaded %count% reforges."
 
   applied-reforge: "Applied %reforge%&r reforge!"
+  reforge-failed: "&cFailed to apply %reforge%&r reforge!"
+  dismantled-reforges: "&cDismantled %count% reforge(s) from the item!"
+  dismantle-failed: "&cFailed to dismantle reforges from the item!"
+  no-reforges-to-dismantle: "&cThere are no reforges to dismantle on this item!"
+  cannot-dismantle-item: "&cThis dismantle stone cannot be used on this item!"
   needs-player: "&cYou must specify a player"
   invalid-player: "&cInvalid player!"
   needs-stone: "&cYou must specify a reforge stone"

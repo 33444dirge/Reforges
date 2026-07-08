@@ -2,6 +2,7 @@ package com.willfp.reforges.gui
 
 import com.willfp.eco.core.EcoPlugin
 import com.willfp.eco.core.config.emptyConfig
+import com.willfp.eco.core.display.Display
 import com.willfp.eco.core.drops.DropQueue
 import com.willfp.eco.core.gui.captiveSlot
 import com.willfp.eco.core.gui.menu
@@ -24,6 +25,7 @@ import com.willfp.ecomponent.menuStateVar
 import com.willfp.ecomponent.setSlot
 import com.willfp.libreforge.LibreforgeSpigotPlugin
 import com.willfp.reforges.api.applyReforge
+import com.willfp.reforges.api.dismantleReforges
 import com.willfp.reforges.plugin
 import com.willfp.reforges.reforges.PriceMultipliers.reforgePriceMultiplier
 import com.willfp.reforges.reforges.Reforge
@@ -31,9 +33,8 @@ import com.willfp.reforges.reforges.ReforgeTarget
 import com.willfp.reforges.reforges.ReforgeTargets
 import com.willfp.reforges.util.ReforgeStatus
 import com.willfp.reforges.util.getRandomReforge
-import com.willfp.reforges.util.reforge
+import com.willfp.reforges.util.reforges
 import com.willfp.reforges.util.reforgeStone
-import com.willfp.reforges.util.timesReforged
 import org.bukkit.entity.Player
 import kotlin.math.pow
 
@@ -58,7 +59,7 @@ private object IndicatorSlot : CustomSlot() {
     private val slot = slot { player, menu ->
         val status = menu.reforgeStatus[player].status
 
-        if (status == ReforgeStatus.ALLOW || status == ReforgeStatus.ALLOW_STONE) {
+        if (status == ReforgeStatus.ALLOW || status == ReforgeStatus.ALLOW_STONE || status == ReforgeStatus.ALLOW_DISMANTLE) {
             Items.lookup(plugin.configYml.getString("gui.show-allowed.allow-material")).item
         } else {
             Items.lookup(plugin.configYml.getString("gui.show-allowed.deny-material")).item
@@ -79,14 +80,36 @@ private class ActivatorSlot(
 
         val configKey = status.configKey
 
+        val reforgesToDismantle = if (status == ReforgeStatus.ALLOW_DISMANTLE) {
+            val stone = reforgeStone[player]?.reforgeStone
+            val item = itemToReforge[player]
+            if (stone != null && item != null) {
+                stone.getReforgesToDismantle(item).joinToString(", ") { it.name }
+            } else ""
+        } else ""
+
+        val dismantleCount = if (status == ReforgeStatus.ALLOW_DISMANTLE) {
+            val stone = reforgeStone[player]?.reforgeStone
+            val item = itemToReforge[player]
+            if (stone != null && item != null) {
+                val toRemove = stone.getReforgesToDismantle(item)
+                val total = toRemove.size
+                val maxCount = stone.dismantleMaxCount
+                if (maxCount > 0) {
+                    "&c$total&7/&c$maxCount"
+                } else {
+                    "&c$total"
+                }
+            } else "&c0"
+        } else "&c0"
+
         Items.lookup(plugin.configYml.getString("gui.$configKey.material")).modify {
             setDisplayName(plugin.configYml.getString("gui.$configKey.name"))
             addLoreLines(plugin.configYml.getStrings("gui.$configKey.lore").map {
                 it.replace("%price%", price.getDisplay(player))
-                    .replace(
-                        "%stone%",
-                        reforgeStone[player]?.reforgeStone?.name ?: ""
-                    )
+                    .replace("%stone%", reforgeStone[player]?.reforgeStone?.name ?: "")
+                    .replace("%reforges%", reforgesToDismantle)
+                    .replace("%dismantle-count%", dismantleCount)
                     // Legacy
                     .replace("%cost%", price.getDisplay(player))
                     .replace("%xpcost%", price.getDisplay(player))
@@ -97,7 +120,7 @@ private class ActivatorSlot(
             val player = event.whoClicked as Player
 
             val item = itemToReforge[player] ?: return@onLeftClick
-            val currentReforge = item.reforge
+            val currentReforges = item.reforges
 
             val targets = ReforgeTargets.getForItem(item)
 
@@ -105,16 +128,79 @@ private class ActivatorSlot(
 
             val stoneInMenu = reforgeStone[player]?.reforgeStone
 
-            val reforge = if (stoneInMenu != null && stoneInMenu.canBeAppliedTo(item)) {
+            // === 检查是否为拆卸石 ===
+            if (stoneInMenu != null && stoneInMenu.dismantleEnabled) {
+                if (stoneInMenu.canDismantle(item)) {
+                    // ---- 拆卸逻辑 ----
+                    val price = menu.reforgeStatus[player].price
+
+                    if (!price.canAfford(player)) {
+                        player.sendMessage(
+                            EcoPlugin.getPlugin(LibreforgeSpigotPlugin::class.java)
+                                .langYml.getMessage("cannot-afford-price").replace("%price%", price.getDisplay(player))
+                        )
+                        PlayableSound.create(plugin.configYml.getSubsection("gui.cannot-afford-sound"))?.playTo(player)
+                        return@onLeftClick
+                    }
+
+                    // 先检查是否有可拆卸的重铸石
+                    val toRemove = stoneInMenu.getReforgesToDismantle(item)
+                    if (toRemove.isEmpty()) {
+                        player.sendMessage(plugin.langYml.getMessage("no-reforges-to-dismantle"))
+                        return@onLeftClick
+                    }
+
+                    price.pay(player)
+
+                    // 执行拆卸（内部包含概率判定）
+                    val removed = player.dismantleReforges(item, stoneInMenu)
+                    if (removed.isEmpty()) {
+                        // 拆卸失败（概率未通过）
+                        if (stoneInMenu.consumeOnFail) {
+                            // 失败且消耗石头 - 从 GUI 槽位移除
+                            val stone = reforgeStone[player] ?: return@onLeftClick
+                            stone.amount -= 1
+                        }
+                        // 否则石头留在槽位中，玩家可以再次尝试
+                        player.sendMessage(plugin.langYml.getMessage("dismantle-failed"))
+                        menu.callEvent(player, CaptiveItemChangeEvent(0, 0, null, null))
+                        return@onLeftClick
+                    }
+
+                    // 拆卸成功
+                    player.sendMessage(
+                        plugin.langYml.getMessage("dismantled-reforges")
+                            .replace("%count%", removed.size.toString())
+                            .replace("%reforges%", removed.joinToString(", ") { it.name })
+                    )
+
+                    // 消耗拆卸石（如果不返还）
+                    val stone = reforgeStone[player] ?: return@onLeftClick
+                    if (!stoneInMenu.dismantleReturnStone) {
+                        stone.amount -= 1
+                    }
+
+                    PlayableSound.create(plugin.configYml.getSubsection("gui.dismantle-sound"))?.playTo(player)
+                    // 刷新物品显示：清除 Display 系统添加的临时 lore，客户端通过数据包自动显示
+                    Display.revert(item)
+                    menu.callEvent(player, CaptiveItemChangeEvent(0, 0, null, null))
+                    return@onLeftClick
+                } else {
+                    // 拆卸石不能作用于该物品，提示错误
+                    player.sendMessage(plugin.langYml.getMessage("cannot-dismantle-item"))
+                    return@onLeftClick
+                }
+            }
+
+            // ---- 普通重铸逻辑 ----
+            val reforge = if (stoneInMenu != null && stoneInMenu.canBeAppliedTo(item) && stoneInMenu.checkReforgeConditions(player, item)) {
                 usedStone = true
                 stoneInMenu
+            } else if (plugin.configYml.getBool("reforge.require-stone")) {
+                // require-stone 模式下不允许无石重铸
+                return@onLeftClick
             } else {
-                val disallowed = mutableListOf<Reforge>()
-                if (currentReforge != null) {
-                    disallowed.add(currentReforge)
-                }
-
-                targets.getRandomReforge(disallowed = disallowed)
+                targets.getRandomReforge(disallowed = currentReforges)
             }
 
             if (reforge == null) {
@@ -125,7 +211,6 @@ private class ActivatorSlot(
 
             if (!price.canAfford(player)) {
                 player.sendMessage(
-                    // Not clean but hey ho
                     EcoPlugin.getPlugin(LibreforgeSpigotPlugin::class.java)
                         .langYml.getMessage("cannot-afford-price").replace("%price%", price.getDisplay(player))
                 )
@@ -133,7 +218,17 @@ private class ActivatorSlot(
                 return@onLeftClick
             }
 
-            if (!player.applyReforge(item, reforge, price, usedStone)) return@onLeftClick
+            if (!player.applyReforge(item, reforge, price, usedStone)) {
+                // 重铸失败（事件被取消或概率未通过）
+                if (usedStone && reforge.consumeOnFail) {
+                    // 失败且消耗石头 - 从 GUI 槽位移除
+                    val stone = reforgeStone[player] ?: return@onLeftClick
+                    stone.amount -= 1
+                }
+                // 否则石头留在槽位中，玩家可以再次尝试
+                player.sendMessage(plugin.langYml.getMessage("reforge-failed").replace("%reforge%", reforge.name))
+                return@onLeftClick
+            }
 
             player.sendMessage(plugin.langYml.getMessage("applied-reforge").replace("%reforge%", reforge.name))
 
@@ -144,7 +239,9 @@ private class ActivatorSlot(
             }
 
             PlayableSound.create(plugin.configYml.getSubsection("gui.sound"))?.playTo(player)
-            menu.callEvent(player, ReforgePriceChangeEvent())
+            // 刷新物品显示：清除 Display 系统添加的临时 lore，客户端通过数据包自动显示
+            Display.revert(item)
+            menu.callEvent(player, CaptiveItemChangeEvent(0, 0, null, null))
         }
     }
 
@@ -231,7 +328,7 @@ object ReforgeGUI {
 
                 val item = itemToReforge[player]
 
-                val reforges = item?.timesReforged ?: 0
+                val reforges = item?.reforges?.size ?: 0
 
                 var multiplier = if (status.isStonePrice) 1.0 else {
                     plugin.configYml.getDouble("reforge.cost-exponent")
@@ -262,16 +359,29 @@ object ReforgeGUI {
                     } else {
                         val reforgeStone = stone.reforgeStone
                         if (reforgeStone == null) {
-                            ReforgeStatus.ALLOW
-                        } else {
-                            if (reforgeStone.canBeAppliedTo(item)) {
-                                price = reforgeStone.stonePrice ?: defaultPrice
-                                isStonePrice = true
-
-                                ReforgeStatus.ALLOW_STONE
+                            // require-stone 模式下，没有重铸石则禁止重铸
+                            if (plugin.configYml.getBool("reforge.require-stone")) {
+                                ReforgeStatus.INVALID_ITEM
                             } else {
+                                ReforgeStatus.ALLOW
+                            }
+                        } else if (reforgeStone.dismantleEnabled) {
+                            // ---- 拆卸石模式 ----
+                            // 拆卸石绝对不能作为普通重铸石使用
+                            if (reforgeStone.canDismantle(item)) {
+                                price = reforgeStone.dismantlePrice ?: reforgeStone.stonePrice ?: defaultPrice
+                                isStonePrice = true
+                                ReforgeStatus.ALLOW_DISMANTLE
+                            } else {
+                                // 物品无法被此拆卸石拆卸，显示为无效
                                 ReforgeStatus.INVALID_ITEM
                             }
+                        } else if (reforgeStone.canBeAppliedTo(item) && reforgeStone.checkReforgeConditions(player, item!!)) {
+                            price = reforgeStone.stonePrice ?: defaultPrice
+                            isStonePrice = true
+                            ReforgeStatus.ALLOW_STONE
+                        } else {
+                            ReforgeStatus.INVALID_ITEM
                         }
                     }
                 }

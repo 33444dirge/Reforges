@@ -1,0 +1,90 @@
+# 拆卸重铸石 - 用于从物品上移除其他重铸石
+# 当在重铸 GUI 中放入此石头时，会显示"拆卸"按钮
+# 而不是"重铸"按钮
+
+name: "<gradient:#FF6B6B>Purifier</gradient:#FFE66D>"
+
+description:
+  - "&7A special stone that removes"
+  - "&7other reforges from items."
+
+targets:
+  - melee
+  - bow
+  - armor
+  - tool
+
+# 拆卸成功概率（0.0 ~ 1.0），默认为 1.0（100%）
+# 因为 dismantle.enabled = true，所以此概率作用于拆卸
+chance: 1.0
+# 失败时是否消耗石头，默认为 true
+# true: 失败后石头消耗
+# false: 失败后石头不消耗，玩家可以再次尝试
+consume-on-fail: false
+# 失败时的音效（可选）
+fail-sound:
+  enabled: true
+  sound: ENTITY_VILLAGER_NO
+  pitch: 0.8
+  volume: 1
+  category: PLAYERS
+
+# ===== 拆卸配置 =====
+dismantle:
+  enabled: true  # 启用拆卸模式，此石头不会添加到物品，而是移除重铸石
+
+  # 要移除的重铸石列表
+  # 使用 "*" 表示可以移除所有重铸石
+  # 也可以指定特定的 ID，例如: ["acute", "dynamic", "sharp"]
+  reforges:
+    - "*"
+
+  # 是否在拆卸后返还拆卸石给玩家
+  # true: 石头不会被消耗，可以重复使用
+  # false: 石头在拆卸时被消耗
+  return-stone: false
+
+  # 是否将拆下来的重铸石以物品形式返还给玩家
+  # true: 被移除的每个重铸石都会生成对应的重铸石物品给玩家
+  # false: 被移除的重铸石直接消失，不返还
+  return-dismantled-reforges: true
+
+  # 单次最大可拆卸的重铸石数量
+  # -1: 不限制（一次性拆卸所有匹配的重铸石）
+  # 1: 每次只拆卸 1 个
+  # 3: 每次最多拆卸 3 个
+  max-count: -1
+
+  # (可选) 拆卸的价格，覆盖默认价格
+  price:
+    value: 50000
+    type: coins
+    display: "&6$%value%"
+
+stone:
+  enabled: true
+  name: "<gradient:#FF6B6B>Purifier</gradient:#FFE66D>&f Reforge Stone"
+  lore:
+    - "&7Place on the right of the"
+    - "&7reforge menu to dismantle"
+    - "&7reforges from the item!"
+  item: player_head texture:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYjA5YzY4OTc3YzUyZTcxMDY5ZDRmYzliY2YxNWNhMThiNzAyODc3NmRmYjdlMTRjOTM1MTY5NGE3NmM5NjhmYiJ9fX0=
+  craftable: true
+  shapeless: false
+  recipe:
+    - air
+    - diamond_block
+    - air
+    - netherite_ingot
+    - dragon_breath
+    - netherite_ingot
+    - air
+    - diamond_block
+    - air
+
+# 拆卸石不需要效果（因为它不附加到物品上）
+effects: []
+
+conditions: []
+
+on-reforge-effects: []

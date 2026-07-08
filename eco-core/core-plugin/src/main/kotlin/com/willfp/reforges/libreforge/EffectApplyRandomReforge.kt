@@ -10,7 +10,7 @@ import com.willfp.libreforge.triggers.TriggerParameter
 import com.willfp.reforges.api.applyReforge
 import com.willfp.reforges.reforges.ReforgeTargets
 import com.willfp.reforges.util.getRandomReforge
-import com.willfp.reforges.util.reforge
+import com.willfp.reforges.util.reforges
 
 object EffectApplyRandomReforge : Effect<NoCompileData>("apply_random_reforge") {
     override val parameters = setOf(
@@ -25,7 +25,7 @@ object EffectApplyRandomReforge : Effect<NoCompileData>("apply_random_reforge") 
         val targets = ReforgeTargets.getForItem(item)
         if (targets.isEmpty()) return false
 
-        val reforge = targets.getRandomReforge(disallowed = listOfNotNull(item.reforge)) ?: return false
+        val reforge = targets.getRandomReforge(disallowed = item.reforges) ?: return false
 
         player.applyReforge(item, reforge, ConfiguredPrice.createOrFree(emptyConfig()))
         return true

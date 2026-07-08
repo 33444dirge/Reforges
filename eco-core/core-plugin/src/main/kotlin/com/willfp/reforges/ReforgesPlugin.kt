@@ -13,10 +13,15 @@ import com.willfp.libreforge.loader.configs.ConfigCategory
 import com.willfp.libreforge.registerHolderProvider
 import com.willfp.reforges.commands.CommandReforge
 import com.willfp.reforges.commands.CommandReforges
+import com.willfp.reforges.config.DismantleMappingsConfig
+import com.willfp.reforges.config.SocketsYml
 import com.willfp.reforges.config.TargetYml
 import com.willfp.reforges.display.ReforgesDisplay
 import com.willfp.reforges.gui.ReforgeGUI
 import com.willfp.reforges.libreforge.ConditionHasReforge
+import com.willfp.reforges.libreforge.ConditionHasReforges
+import com.willfp.reforges.libreforge.ConditionReforgeCount
+import com.willfp.reforges.libreforge.ConditionReforgeCountGroup
 import com.willfp.reforges.libreforge.EffectApplyRandomReforge
 import com.willfp.reforges.libreforge.EffectApplyReforge
 import com.willfp.reforges.libreforge.EffectRemoveReforge
@@ -24,6 +29,7 @@ import com.willfp.reforges.libreforge.FilterReforge
 import com.willfp.reforges.libreforge.TriggerReforgeItem
 import com.willfp.reforges.reforges.PriceMultipliers
 import com.willfp.reforges.reforges.ReforgeFinder
+import com.willfp.reforges.reforges.ReforgeSockets
 import com.willfp.reforges.reforges.ReforgeStoneTag
 import com.willfp.reforges.reforges.ReforgeTargets
 import com.willfp.reforges.reforges.ReforgedTag
@@ -38,6 +44,8 @@ internal lateinit var plugin: ReforgesPlugin
 
 class ReforgesPlugin : LibreforgePlugin() {
     val targetYml: TargetYml = TargetYml(this)
+    val socketsYml: SocketsYml = SocketsYml(this)
+    val dismantleMappingsConfig: DismantleMappingsConfig = DismantleMappingsConfig(this)
 
     init {
         plugin = this
@@ -51,6 +59,9 @@ class ReforgesPlugin : LibreforgePlugin() {
 
     override fun handleEnable() {
         Conditions.register(ConditionHasReforge)
+        Conditions.register(ConditionHasReforges)
+        Conditions.register(ConditionReforgeCount)
+        Conditions.register(ConditionReforgeCountGroup)
 
         Items.registerArgParser(ReforgeArgParser)
 
@@ -68,6 +79,7 @@ class ReforgesPlugin : LibreforgePlugin() {
 
     override fun handleReload() {
         ReforgeTargets.update()
+        ReforgeSockets.update()
         PriceMultipliers.update()
         ReforgeGUI.update()
     }

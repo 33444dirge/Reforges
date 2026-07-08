@@ -3,7 +3,7 @@ package com.willfp.reforges.reforges.util
 import com.willfp.eco.core.items.args.LookupArgParser
 import com.willfp.reforges.reforges.Reforge
 import com.willfp.reforges.reforges.Reforges
-import com.willfp.reforges.util.reforge
+import com.willfp.reforges.util.reforges
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
 import java.util.function.Predicate
@@ -13,7 +13,7 @@ object ReforgeArgParser : LookupArgParser {
         args: Array<String>,
         meta: ItemMeta
     ): Predicate<ItemStack>? {
-        var reforge: Reforge? = null
+        val foundReforges = mutableListOf<Reforge>()
 
         for (arg in args) {
             val split = arg.split(":").toTypedArray()
@@ -21,23 +21,23 @@ object ReforgeArgParser : LookupArgParser {
                 continue
             }
             val match = Reforges.getByKey(split[1].lowercase()) ?: continue
-            reforge = match
-            break
+            foundReforges.add(match)
         }
 
-        reforge ?: return null
+        if (foundReforges.isEmpty()) return null
 
-        meta.reforge = reforge
+        meta.reforges = foundReforges
 
         return Predicate { test ->
             val testMeta = test.itemMeta ?: return@Predicate false
-            reforge == testMeta.reforge
+            foundReforges == testMeta.reforges
         }
     }
 
     override fun serializeBack(meta: ItemMeta): String? {
-        val reforge = meta.reforge ?: return null
+        val reforges = meta.reforges
+        if (reforges.isEmpty()) return null
 
-        return "reforge:${reforge.id}"
+        return reforges.joinToString(" ") { "reforge:${it.id}" }
     }
 }

@@ -11,10 +11,13 @@ import com.willfp.eco.util.SkullUtils
 import com.willfp.eco.util.StringUtils
 import com.willfp.eco.util.formatEco
 import com.willfp.eco.util.toJSON
+import net.kyori.adventure.text.format.TextDecoration
 import com.willfp.libreforge.ItemProvidedHolder
 import com.willfp.reforges.plugin
+import com.willfp.reforges.reforges.ReforgeSockets
 import com.willfp.reforges.reforges.ReforgeTargets
-import com.willfp.reforges.util.reforge
+import com.willfp.reforges.util.getReforges
+import com.willfp.reforges.util.reforges
 import com.willfp.reforges.util.reforgeStone
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -45,14 +48,14 @@ object ReforgesDisplay : DisplayModule(plugin, DisplayPriority.HIGH) {
 
         val lore = fastItemStack.lore
 
-        val reforge = fast.persistentDataContainer.reforge
+        val reforgesList = fast.persistentDataContainer.getReforges()
 
         val context = placeholderContext(
             player = player,
             item = itemStack
         )
 
-        if (reforge == null && stone == null) {
+        if (reforgesList.isEmpty() && stone == null) {
             if (plugin.configYml.getBool("reforge.show-reforgable")) {
                 if (props.inGui) {
                     return
@@ -88,13 +91,15 @@ object ReforgesDisplay : DisplayModule(plugin, DisplayPriority.HIGH) {
             lore.addAll(0, stoneLore)
         }
 
-        if (reforge != null) {
+        if (reforgesList.isNotEmpty()) {
             if (plugin.configYml.getBool("reforge.display-in-lore")) {
                 val addLore: MutableList<String> = ArrayList()
-                for (string in plugin.configYml.getFormattedStrings("reforge.reforged-prefix")) {
-                    addLore.add(Display.PREFIX + string.replace("%reforge%", reforge.name))
+                for (reforge in reforgesList) {
+                    for (string in plugin.configYml.getFormattedStrings("reforge.reforged-prefix")) {
+                        addLore.add(Display.PREFIX + string.replace("%reforge%", reforge.name))
+                    }
+                    addLore.addAll(reforge.description.formatEco(context))
                 }
-                addLore.addAll(reforge.description.formatEco(context))
                 addLore.replaceAll { "${Display.PREFIX}$it" }
                 lore.addAll(addLore)
             }
@@ -102,29 +107,50 @@ object ReforgesDisplay : DisplayModule(plugin, DisplayPriority.HIGH) {
             if (plugin.configYml.getBool("reforge.display-in-name")) {
                 val displayName = fastItemStack.displayNameComponent
 
-                if (!fastItemStack.displayName.contains(reforge.name)) {
+                // 检查是否已经有重铸石前缀，避免重复添加
+                val hasAnyReforgeInName = reforgesList.any { reforge ->
+                    fastItemStack.displayName.contains(reforge.name)
+                }
+
+                if (!hasAnyReforgeInName) {
                     fastItemStack.persistentDataContainer.set(
                         tempKey,
                         PersistentDataType.STRING,
                         displayName.toJSON()
                     )
 
-                    val newName = reforge.namePrefixComponent.append(displayName)
+                    // 将所有重铸石名称添加到物品名前缀
+                    var allReforgePrefixes = displayName
+                    for (reforge in reforgesList) {
+                        allReforgePrefixes = StringUtils.toComponent("${reforge.name} ")
+                            .decoration(TextDecoration.ITALIC, false)
+                            .append(allReforgePrefixes)
+                    }
 
-                    fastItemStack.setDisplayName(newName)
+                    fastItemStack.setDisplayName(allReforgePrefixes)
                 }
             }
 
 
             if (player != null) {
-                val provided = ItemProvidedHolder(reforge, itemStack)
+                for (reforge in reforgesList) {
+                    val provided = ItemProvidedHolder(reforge, itemStack)
 
-                val lines = provided.getNotMetLines(player).map { Display.PREFIX + it }
+                    val lines = provided.getNotMetLines(player).map { Display.PREFIX + it }
 
-                if (lines.isNotEmpty()) {
-                    lore.add(Display.PREFIX)
-                    lore.addAll(lines)
+                    if (lines.isNotEmpty()) {
+                        lore.add(Display.PREFIX)
+                        lore.addAll(lines)
+                    }
                 }
+            }
+        }
+
+        // ---- 重铸石槽位显示 ----
+        val socketLines = ReforgeSockets.getVisibleSockets(itemStack, reforgesList)
+        if (!socketLines.isNullOrEmpty()) {
+            for (line in socketLines) {
+                lore.add(Display.PREFIX + line)
             }
         }
 
@@ -132,10 +158,19 @@ object ReforgesDisplay : DisplayModule(plugin, DisplayPriority.HIGH) {
     }
 
     override fun revert(itemStack: ItemStack) {
-        itemStack.reforge ?: return
-
         val fis = FastItemStack.wrap(itemStack)
 
+        // 移除所有由 Display 系统添加的 lore 行（以 Display.PREFIX 开头）
+        // 这些行是 display() 中由本模块及其他 DisplayModule 动态添加的，
+        // 不应持久化到物品的 NBT 中
+        val cleanedLore = fis.lore.filterNot { it.startsWith(Display.PREFIX) }
+        if (cleanedLore.size != fis.lore.size) {
+            fis.lore = cleanedLore.toMutableList()
+        }
+
+        if (itemStack.reforges.isEmpty()) return
+
+        // 还原原始显示名称
         if (!plugin.configYml.getBool("reforge.display-in-name")) {
             return
         }

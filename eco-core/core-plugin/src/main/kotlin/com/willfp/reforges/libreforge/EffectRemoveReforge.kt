@@ -5,7 +5,7 @@ import com.willfp.libreforge.NoCompileData
 import com.willfp.libreforge.effects.Effect
 import com.willfp.libreforge.triggers.TriggerData
 import com.willfp.libreforge.triggers.TriggerParameter
-import com.willfp.reforges.util.reforge
+import com.willfp.reforges.util.reforges
 
 object EffectRemoveReforge : Effect<NoCompileData>("remove_reforge") {
     override val parameters = setOf(
@@ -18,7 +18,7 @@ object EffectRemoveReforge : Effect<NoCompileData>("remove_reforge") {
 
         if (item.type.isAir) return false
 
-        item.reforge = null
+        item.reforges = emptyList()
         return true
     }
 }

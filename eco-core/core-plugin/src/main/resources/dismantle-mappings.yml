@@ -1,0 +1,15 @@
+# 拆卸物品映射配置
+# 当拆卸重铸石时，如果该重铸石的 ID 在此映射中，则给予对应的物品而非原重铸石
+# 这可以用于兼容 CraftEngine 等自定义物品插件
+#
+# 格式：<重铸石配置文件ID>: <物品ID>
+# 物品ID 可以是原版物品、CraftEngine 物品、eco 物品等
+#
+# 示例：
+#   myyh: "craftengine:reforges:myyh"
+#   shadow_dash: "craftengine:reforges:shadow_dash"
+#   ender_eternal: "minecraft:ender_pearl"
+#
+# 注意：仅当拆卸石配置了 return-dismantled-reforges: true 时才会生效
+
+mappings: { }

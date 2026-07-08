@@ -1,0 +1,46 @@
+#
+# 重铸石槽位显示配置
+# 给可重铸的物品显示空槽位，当对应重铸石打上后该槽位行消失
+# 纯显示，不影响实际可重铸数量
+#
+# 每个槽位可以指定需要的重铸石 ID
+# 当物品拥有对应 ID 的重铸石时，该槽位行会隐藏
+# 同 ID 的槽位按编号升序依次消耗（1先，2次之...）
+#
+
+swords_and_axes:
+  enabled: false
+  items:
+    - "#items_swords"
+    - "#items_axes"
+  sockets:
+    1:
+      aerobic: " &7◆ &8[&7 Empty Reforge Socket &8- &aaerobic&8]"
+    2:
+      thin: " &7◆ &8[&7 Empty Reforge Socket &8- &bthin&8]"
+    3:
+      tough: " &7◆ &8[&7 Empty Reforge Socket &8- &ctough&8]"
+    4:
+      aerobic: " &7◆ &8[&7 Empty Reforge Socket &8- &aaerobic&8]"
+
+armor:
+  enabled: false
+  items:
+    - "#items_head_armor"
+    - "#items_chest_armor"
+    - "#items_leg_armor"
+    - "#items_foot_armor"
+  sockets:
+    1:
+      hardened: " &7◇ &8[&7 Empty Reforge Socket &8- &ehardened&8]"
+    2:
+      reinforced: " &7◇ &8[&7 Empty Reforge Socket &8- &ereinforced&8]"
+
+bows:
+  enabled: false
+  items:
+    - bow
+    - crossbow
+  sockets:
+    1:
+      precise: " &7○ &8[&7 Empty Reforge Socket &8- &fprecise&8]"

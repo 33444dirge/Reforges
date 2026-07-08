@@ -11,6 +11,20 @@ description: # The lore to add to an item with this reforge:
 targets: # The targets that this reforge can be applied to
   - melee
 
+# 成功概率（0.0 ~ 1.0），默认为 1.0（100%）
+# 当此处为普通重铸石（无 dismantle 配置）时，此概率作用于重铸
+# 当存在 dismantle.enabled = true 时，此概率作用于拆卸
+chance: 1.0
+# 失败时是否消耗石头，默认为 true
+consume-on-fail: true
+# 失败时的音效（可选）
+fail-sound:
+  enabled: true
+  sound: ENTITY_VILLAGER_NO
+  pitch: 0.8
+  volume: 1
+  category: PLAYERS
+
 # Options for the reforge stone
 stone:
   enabled: true # If this reforge requires the use of a reforge stone
@@ -54,7 +68,13 @@ effects:
       - melee_attack
 
 # The conditions required to use the reforge
+# 这些是运行时条件，在效果触发前检测
 conditions: [ ]
+
+# 重铸条件：在重铸时检测（GUI中点击应用时），条件不满足则无法应用此重铸石
+# 适用于：禁止重复应用、检测物品等级、检测玩家权限等
+# 配置格式与 conditions 相同
+reforge_conditions: [ ]
 
 # Effects to run when the reforge is applied to an item.
 on-reforge-effects: [ ]

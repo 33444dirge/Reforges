@@ -99,6 +99,17 @@ gui:
       - '%price%'
       - ''
       - '&eClick to reforge!'
+  allow-dismantle:
+    material: anvil
+    name: "&cDismantle Reforges"
+    lore:
+      - '&7Dismantling &c%dismantle-count% &7reforge(s) from the item:'
+      - '&7%reforges%'
+      - ''
+      - '&7Price:'
+      - '%price%'
+      - ''
+      - '&eClick to dismantle!'
   no-item:
     material: anvil
     name: "&eReforge Item"
@@ -134,6 +145,13 @@ gui:
     volume: 1
     category: PLAYERS
 
+  dismantle-sound:
+    enabled: true
+    sound: ENTITY_ZOMBIE_BREAK_WOODEN_DOOR
+    pitch: 0.8
+    volume: 1
+    category: PLAYERS
+
   cannot-afford-sound:
     enabled: true
     sound: ENTITY_VILLAGER_NO
@@ -142,6 +160,10 @@ gui:
     category: PLAYERS
 
 reforge:
+  # 是否必须使用重铸石才能重铸
+  # true:  玩家必须在右侧放入对应的重铸石才能重铸
+  # false: 玩家可以不使用重铸石，随机获得一个重铸效果
+  require-stone: false
   # See here: https://plugins.auxilor.io/all-plugins/prices
   price:
     value: 7500

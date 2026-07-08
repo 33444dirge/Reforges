@@ -27,6 +27,7 @@ object EffectApplyReforge : Effect<NoCompileData>("apply_reforge") {
         val item = data.item ?: player.inventory.itemInMainHand
 
         if (!reforge.canBeAppliedTo(item)) return false
+        if (!reforge.checkReforgeConditions(player, item)) return false
 
         player.applyReforge(item, reforge, ConfiguredPrice.createOrFree(emptyConfig()))
         return true
