@@ -31,18 +31,23 @@ object ReforgeTargets {
 
     internal fun update() {
         ALL.items.clear()
+        val targetIds = plugin.targetYml.targets.toSet()
         for (id in ArrayList(registered.keys)) {
-            if (id.equals("all", ignoreCase = true)) {
-                continue
+            if (!id.equals("all", ignoreCase = true) && id !in targetIds) {
+                registered.remove(id)
             }
-            registered.remove(id)
         }
-        for (id in plugin.targetYml.targets) {
-            val target = ReforgeTarget(
+        for (id in targetIds) {
+            // Keep existing target instances so Reforge objects created before
+            // late item/tag registration observe the refreshed items and slot.
+            val target = registered[id] ?: ReforgeTarget(
                 id,
                 plugin.targetYml.getSlot(id),
-                plugin.targetYml.getTargetItems(id).toMutableSet()
-            )
+                mutableSetOf()
+            ).also { registered[id] = it }
+            target.slot = plugin.targetYml.getSlot(id)
+            target.items.clear()
+            target.items.addAll(plugin.targetYml.getTargetItems(id))
             registered[id] = target
             ALL.items.addAll(target.items)
         }

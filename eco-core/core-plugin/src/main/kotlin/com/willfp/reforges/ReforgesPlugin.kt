@@ -75,6 +75,15 @@ class ReforgesPlugin : LibreforgePlugin() {
         Effects.register(EffectRemoveReforge)
         Triggers.register(TriggerReforgeItem)
         Filters.register(FilterReforge)
+
+        // EcoArmor and other extensions may register item tags after this
+        // plugin loads its configs. Refresh targets once all plugins are enabled
+        // so entries such as #items_head_armor are available immediately.
+        scheduler.runLater(1) {
+            ReforgeTargets.update()
+            ReforgeSockets.update()
+            ReforgeGUI.update()
+        }
     }
 
     override fun handleReload() {

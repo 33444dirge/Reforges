@@ -8,7 +8,7 @@ import java.util.Objects
 
 class ReforgeTarget(
     val id: String,
-    val slot: SlotType,
+    var slot: SlotType,
     val items: MutableSet<TestableItem>
 ) {
     init {
