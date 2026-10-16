@@ -163,8 +163,9 @@ object ReforgesDisplay : DisplayModule(plugin, DisplayPriority.HIGH) {
         // 移除所有由 Display 系统添加的 lore 行（以 Display.PREFIX 开头）
         // 这些行是 display() 中由本模块及其他 DisplayModule 动态添加的，
         // 不应持久化到物品的 NBT 中
-        val cleanedLore = fis.lore.filterNot { it.startsWith(Display.PREFIX) }
-        if (cleanedLore.size != fis.lore.size) {
+        val originalLore = fis.lore
+        val cleanedLore = originalLore.filterNot { it.startsWith(Display.PREFIX) }
+        if (cleanedLore.size != originalLore.size) {
             fis.lore = cleanedLore.toMutableList()
         }
 
