@@ -5,7 +5,6 @@ import com.willfp.eco.core.display.DisplayModule
 import com.willfp.eco.core.display.DisplayPriority
 import com.willfp.eco.core.display.DisplayProperties
 import com.willfp.eco.core.fast.FastItemStack
-import com.willfp.eco.core.fast.fast
 import com.willfp.eco.core.placeholder.context.placeholderContext
 import com.willfp.eco.util.SkullUtils
 import com.willfp.eco.util.StringUtils
@@ -16,7 +15,6 @@ import com.willfp.libreforge.ItemProvidedHolder
 import com.willfp.reforges.plugin
 import com.willfp.reforges.reforges.ReforgeSockets
 import com.willfp.reforges.reforges.ReforgeTargets
-import com.willfp.reforges.util.getReforges
 import com.willfp.reforges.util.reforges
 import com.willfp.reforges.util.reforgeStone
 import org.bukkit.entity.Player
@@ -34,13 +32,10 @@ object ReforgesDisplay : DisplayModule(plugin, DisplayPriority.HIGH) {
         props: DisplayProperties,
         vararg args: Any
     ) {
-        val targets = ReforgeTargets.getForItem(itemStack)
+        val hasTarget = ReforgeTargets.hasForItem(itemStack)
+        val stone = itemStack.reforgeStone
 
-        val fast = itemStack.fast()
-
-        val stone = fast.persistentDataContainer.reforgeStone
-
-        if (targets.isEmpty() && stone == null) {
+        if (!hasTarget && stone == null) {
             return
         }
 
@@ -48,7 +43,7 @@ object ReforgesDisplay : DisplayModule(plugin, DisplayPriority.HIGH) {
 
         val lore = fastItemStack.lore
 
-        val reforgesList = fast.persistentDataContainer.getReforges()
+        val reforgesList = itemStack.reforges
 
         val context = placeholderContext(
             player = player,
@@ -134,6 +129,7 @@ object ReforgesDisplay : DisplayModule(plugin, DisplayPriority.HIGH) {
 
             if (player != null) {
                 for (reforge in reforgesList) {
+                    if (!reforge.hasConditionNotMetLines) continue
                     val provided = ItemProvidedHolder(reforge, itemStack)
 
                     val lines = provided.getNotMetLines(player).map { Display.PREFIX + it }

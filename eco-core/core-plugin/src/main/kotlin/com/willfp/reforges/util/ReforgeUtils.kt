@@ -92,7 +92,7 @@ var ItemMeta?.reforge: Reforge?
 var ItemStack?.reforgeStone: Reforge?
     get() {
         this ?: return null
-        return this.fast().persistentDataContainer.reforgeStone
+        return this.persistentDataContainer.readReforgeStone()
     }
     set(value) {
         this ?: return
@@ -110,16 +110,7 @@ var ItemMeta?.reforgeStone: Reforge?
     }
 
 var PersistentDataContainer?.reforgeStone: Reforge?
-    get() {
-        this ?: return null
-
-        if (!this.has(reforgeStoneKey, PersistentDataType.STRING)) {
-            return null
-        }
-
-        val active = this.get(reforgeStoneKey, PersistentDataType.STRING)
-        return Reforges.getByKey(active)
-    }
+    get() = this?.readReforgeStone()
     set(value) {
         this ?: return
         if (value == null) {
@@ -128,6 +119,11 @@ var PersistentDataContainer?.reforgeStone: Reforge?
             this.set(reforgeStoneKey, PersistentDataType.STRING, value.id.key)
         }
     }
+
+private fun PersistentDataContainerView.readReforgeStone(): Reforge? {
+    if (!this.has(reforgeStoneKey, PersistentDataType.STRING)) return null
+    return Reforges.getByKey(this.get(reforgeStoneKey, PersistentDataType.STRING))
+}
 
 fun Collection<ReforgeTarget>.getRandomReforge(
     disallowed: Collection<Reforge> = emptyList()
