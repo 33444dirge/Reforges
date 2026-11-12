@@ -6,6 +6,7 @@ import com.willfp.reforges.plugin
 import com.willfp.reforges.reforges.Reforge
 import com.willfp.reforges.reforges.ReforgeTarget
 import com.willfp.reforges.reforges.Reforges
+import io.papermc.paper.persistence.PersistentDataContainerView
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.persistence.PersistentDataContainer
@@ -18,7 +19,9 @@ private val reforgeStoneKey = plugin.namespacedKeyFactory.create("reforge_stone"
  * 从 PersistentDataContainer 读取重铸石列表（JSON 数组格式）
  * 向后兼容：如果存储的是旧版单值格式，也会正确读取
  */
-fun PersistentDataContainer.getReforges(): List<Reforge> {
+fun PersistentDataContainer.getReforges(): List<Reforge> = readReforges()
+
+private fun PersistentDataContainerView.readReforges(): List<Reforge> {
     if (!this.has(reforgeKey, PersistentDataType.STRING)) return emptyList()
     val raw = this.get(reforgeKey, PersistentDataType.STRING) ?: return emptyList()
     if (raw.isEmpty()) return emptyList()
@@ -49,7 +52,7 @@ fun PersistentDataContainer.setReforges(reforges: List<Reforge>) {
 var ItemStack?.reforges: List<Reforge>
     get() {
         this ?: return emptyList()
-        return this.fast().persistentDataContainer.getReforges()
+        return this.persistentDataContainer.readReforges()
     }
     set(value) {
         this ?: return
@@ -89,7 +92,7 @@ var ItemMeta?.reforge: Reforge?
 var ItemStack?.reforgeStone: Reforge?
     get() {
         this ?: return null
-        return this.fast().persistentDataContainer.reforgeStone
+        return this.persistentDataContainer.readReforgeStone()
     }
     set(value) {
         this ?: return
@@ -107,16 +110,7 @@ var ItemMeta?.reforgeStone: Reforge?
     }
 
 var PersistentDataContainer?.reforgeStone: Reforge?
-    get() {
-        this ?: return null
-
-        if (!this.has(reforgeStoneKey, PersistentDataType.STRING)) {
-            return null
-        }
-
-        val active = this.get(reforgeStoneKey, PersistentDataType.STRING)
-        return Reforges.getByKey(active)
-    }
+    get() = this?.readReforgeStone()
     set(value) {
         this ?: return
         if (value == null) {
@@ -125,6 +119,11 @@ var PersistentDataContainer?.reforgeStone: Reforge?
             this.set(reforgeStoneKey, PersistentDataType.STRING, value.id.key)
         }
     }
+
+private fun PersistentDataContainerView.readReforgeStone(): Reforge? {
+    if (!this.has(reforgeStoneKey, PersistentDataType.STRING)) return null
+    return Reforges.getByKey(this.get(reforgeStoneKey, PersistentDataType.STRING))
+}
 
 fun Collection<ReforgeTarget>.getRandomReforge(
     disallowed: Collection<Reforge> = emptyList()

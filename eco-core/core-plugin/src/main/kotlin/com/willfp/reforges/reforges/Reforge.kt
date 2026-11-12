@@ -49,6 +49,11 @@ class Reforge(
         ViolationContext(plugin, "Reforge $id")
     )
 
+    internal val hasConditionNotMetLines: Boolean
+        get() = conditions.any { it.notMetLines.isNotEmpty() } || effects.any { effect ->
+            effect.conditions.any { it.notMetLines.isNotEmpty() }
+        }
+
     /**
      * 重铸条件：在重铸时检测（区别于 conditions，后者在运行时检测效果是否触发）
      * 配置在 reforge_conditions 下

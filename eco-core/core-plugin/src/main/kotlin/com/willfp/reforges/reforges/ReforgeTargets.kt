@@ -29,6 +29,13 @@ object ReforgeTargets {
             .filter { it.matches(item) }
     }
 
+    fun hasForItem(item: ItemStack?): Boolean {
+        if (item == null) return false
+        return registered.values.any {
+            !it.id.equals("all", ignoreCase = true) && it.matches(item)
+        }
+    }
+
     internal fun update() {
         ALL.items.clear()
         val targetIds = plugin.targetYml.targets.toSet()
